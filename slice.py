@@ -19,19 +19,34 @@ class PizzaSlice(Scene):
         # Adding centre dot
         circleDots.append(Dot(circle.get_center(), 0.07, color=RED).set_z_index(1.0))
 
-        #lines = Line(arcs[2].get_start(), arcs[1].get_arc_center())
-        centrePoints = [Point(a.get_arc_center()) for a in arcs]
+        # Joining the arc ends with the centre of the neighboring arc
+        arcCentres = [Point(a.get_midpoint()) for a in arcs]
+        arcCentreDots = [Dot(p.location, 0.07, color=BLUE).set_z_index(0.0) for p in arcCentres]
+        arcEndDots = [Dot(a.get_start(), 0.07, color=BLUE).set_z_index(0.0) for a in arcs]
+        lines = []
+        for i in range(1, numPoints):
+            lines.append(Line(arcs[i].get_start(), arcCentres[i-1]))
+        lines.append(Line(arcs[0].get_start(), arcCentres[5]))
+
+        # Create polygons from the shapes
+        pizzaSlices = []
+        pizzaSlices.append(ArcPolygonFromArcs(arcs[1], 
+                            ArcBetweenPoints(start=arcCentres[0].location, end=circle.get_center(), radius=3.0),
+                            ArcBetweenPoints(lines[1].get_start(), lines[1].get_end(), radius=None), 
+                            color=PURPLE).set_z_index(2.0))
+
+
         # --- Animations ---
 
-        #
         self.play(Create(circle))
-        for d in circleDots:
-            self.play(Create(d))
+        self.play(FadeIn(VGroup(circleDots)))
         for a in arcs:
             self.play(Create(a))
         self.play(FadeOut(VGroup(circleDots)))
-        #self.add(lines)
-        for p in centrePoints:
-            self.add(p)
+        self.play(FadeIn(VGroup(arcCentreDots + arcEndDots)))
+        for l in lines:
+            self.play(Create(l))
+        for pz in pizzaSlices:
+            self.play(Create(pz))
         self.wait(1.0)
 
